@@ -7,6 +7,8 @@ wheels/
 *.egg-info
 db/.*
 msg/.*
+uv.lock
 
 # Virtual environments
 .venv
+.gitignore
