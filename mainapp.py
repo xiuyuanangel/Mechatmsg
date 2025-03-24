@@ -29,6 +29,7 @@ if not os.path.exists("./db"):
     os.mkdir("./db")
 
 app = Flask(__name__)
+app.config['myusername'] = ''
 
 # 全局进度变量
 _progress = 0
@@ -468,16 +469,13 @@ def msganalysis(year):
                              **data,
                              **contacts_data,
                              **my_message_counter_data)
-
+#region 聊天年度报告
 @app.route("/christmas/<wxid>")
 def christmas(wxid):
-    """圣诞节报告页面
-    
+    """
     生成特定联系人的聊天报告
-    
     Args:
-        wxid: 联系人的微信ID
-        
+        wxid: 联系人的微信ID 
     Returns:
         str: 渲染后的HTML页面
     """
@@ -565,6 +563,11 @@ def christmas(wxid):
     myusername = app.config['myusername'] if app.config['myusername'] else get_myusername()
     my_headimg = df[df['username'] == myusername]['small_head_url'].values[0]
     
+    top5_users = []
+    if '@chatroom' in wxid:
+        top5_users = wx.get_chatroom_msg_count(wxid,5, start, end)
+        top5_users = [df[df['username'] == user[0]][['nickname','small_head_url']].values.tolist()[0] + [user[1]] for user in top5_users]
+
     # 整理模板数据
     template_data = {
         'ta_avatar_path': contact.smallHeadImgUrl,
@@ -585,6 +588,7 @@ def christmas(wxid):
         'emoji_total_num': len(emoji_msgs),
         'emoji_url': '',
         'emoji_num': 1,
+        'top5_users': top5_users,
     }
     
     # 获取词云数据
@@ -593,10 +597,13 @@ def christmas(wxid):
     # 获取日历图数据
     calendar_data = analysis.calendar_chart(contact.wxid, start=start, end=end)
     
+    chart_room_data = analysis.chatroom_count(contact.wxid, top=5, start=start, end=end)
+
     return render_template("christmas.html",
                          **template_data,
                          **wordcloud_data,
                          **calendar_data,
+                        #  **chart_room_data,
                          year_s=year_s,
                          my_avatar_path=my_headimg)
 

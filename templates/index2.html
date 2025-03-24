@@ -331,6 +331,49 @@
         </div>
     </div>
 
+    <!-- 时间范围选择模态框 -->
+    <div class="modal fade" id="dateRangeModal" tabindex="-1" aria-labelledby="dateRangeModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="dateRangeModalLabel">选择时间范围</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="startDate" class="form-label">开始日期</label>
+                        <input type="date" class="form-control" id="startDate">
+                    </div>
+                    <div class="mb-3">
+                        <label for="endDate" class="form-label">结束日期</label>
+                        <input type="date" class="form-control" id="endDate">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="submitDateRange()">确定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function submitDateRange() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            if (startDate && endDate) {
+                const currentUser = document.querySelector('.contact-item.active');
+                if (currentUser) {
+                    const username = currentUser.getAttribute('username');
+                    const url = `/christmas/${username}?start=${startDate}&end=${endDate}`;
+                    window.open(url, '_blank');
+                }
+                $('#dateRangeModal').modal('hide');
+            }
+        }
+    </script>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         const myname = "{{ myname }}";
@@ -426,20 +469,13 @@
                 document.getElementById('loading').style.display = 'none';
             }
         }
+
         function y_analysis(){
-            console.log('y_analysis')
             const currentUser = document.querySelector('.contact-item.active'); // 获取当前选中的联系人
             if (!currentUser) return; // 如果没有选中联系人，则不执行
-            const username = currentUser.getAttribute('username'); // 获取当前联系人的用户名
-            const displayname = currentUser.querySelector('h6').textContent; // 获取当前联系人的显示名
-            const ymsg_ana = document.createElement('a');
-            ymsg_ana.textContent = '';
-            ymsg_ana.href = `/christmas/${username}?`;
-            ymsg_ana.target = '_blank';
-            ymsg_ana.style.display='none'
-            document.body.appendChild(ymsg_ana);
-            ymsg_ana.click(); 
+            $('#dateRangeModal').modal('show'); // 显示模态框
         }
+
         function analysis(){
             const currentUser = document.querySelector('.contact-item.active'); // 获取当前选中的联系人
             if (!currentUser) return; // 如果没有选中联系人，则不执行

@@ -5,12 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>微信年度聊天报告</title>
     <link rel="stylesheet" href="https://memotrace.cn/static/css/style.css">
+    <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"> -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts@latest/dist/echarts.min.js"></script>
     <script type="text/javascript" src="https://assets.pyecharts.org/assets/v5/echarts-wordcloud.min.js"></script>
     <link rel="stylesheet" href="https://memotrace.cn/static/css/fullpage.min.css" />
     <script type="text/javascript" src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <script type="text/javascript" src="https://memotrace.cn/static/js/fullpage.min.js"></script>
     <script type="text/javascript" src="https://davidshimjs.github.io/qrcodejs/qrcode.min.js"></script>
+    <style>
+        .contact-avatar {
+            width: 40px;
+            height: 40px;
+            min-width: 40px;
+            object-fit: cover;
+        }
+    </style>
 </head>
 <body>
     <div id="snow"></div>
@@ -229,6 +238,64 @@
                 <div id="calendar-chart" class="calendar-chart"></div>
             </div>
     </div>
+    {% if top5_users %}
+    <div class="section">
+        <div>
+            <img class="Mountain-Image" src="https://www.freeimg.cn/i/2023/12/20/6582c04711cd2.png" alt="Mountain Image">
+            <img class="corner-light light-top-left txt" src="https://www.freeimg.cn/i/2023/12/20/6582c05d9dcbb.png" alt="Top Left Light">
+            <img class="corner-light light-top-right txt" src="https://www.freeimg.cn/i/2023/12/20/6582c07b257db.png" alt="Bottom Right Light">
+            <img src="https://www.freeimg.cn/i/2023/12/20/6582c064276db.png" alt="包饺子" class="corner-image left-bottom">
+            <img src="https://www.freeimg.cn/i/2023/12/21/658313714609b.png" alt="Right Top Image" class="corner-image right-bottom">
+            <div class="calendar-container" style="width: 45%;">
+                <div class="text012">{{year_s}}</div>
+                <div class="text012">群里最活跃的人</div>
+                <div class="top-users">
+                    {% for user in top5_users %}
+                    <div class="user-bar">
+                        <div style="width: 15%;">
+                            <img class="contact-avatar" src="{{ user[1] }}" alt="{{ user[0] }}">
+                            <span>{{ user[0] }}</span>
+                        </div>
+                        <div class="bar-container" style="width: 60%;">
+                            <div class="bar" style="width: {{ user[2]*100/top5_users[0][2] }}%;"></div>
+                        </div>
+                        <span class="message-count">{{ user[2] }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                <style>
+                    .top-users {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 10px;
+                        margin-top: 15px;
+                    }
+                    .user-bar {
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                    }
+                    .bar-container {
+                        flex-grow: 1;
+                        background-color: #f0f0f0;
+                        border-radius: 5px;
+                        overflow: hidden;
+                    }
+                    .bar {
+                        height: 20px;
+                        background-color: #4caf50;
+                    }
+                    .message-count {
+                        margin-left: 10px;
+                    }
+                </style>
+                <div id="chart_room" class="calendar-chart"></div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+        
+
     <!-- <div class="section" style="text-align: center;display:flex;justify-content: center;align-items: center;"> 
         <h1>分享此页面</h1>
         <div>
@@ -330,6 +397,12 @@ setInterval(getRTime, 1000);
         result.calendar.cellSize = 15;
     }
     chart_51ebd4312946429e9c32b2b55b96a479.setOption(result);
+
+    var chart_room = echarts.init(
+        document.getElementById('chart_room'), 'white', {renderer: 'canvas'});
+    var result = {{chart_room_data|safe}};
+    chart_room.setOption(result);
+
 </script>
 </body>
 </html>

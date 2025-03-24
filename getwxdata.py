@@ -297,9 +297,9 @@ class WeixinDbStorage:
         start, end = date_solve(start=start, end=end)
 
         sql = f'''
-            select count(*)
-            from merged_msg
-            {'where sender_name=' + f"'{username}'" if username else ''}
+            select count(message_content)
+            from merged_msg where local_type in ({self.msgtype})
+            {'AND sender_name=' + f"'{username}'" if username else ''}
             {'AND create_time > ' + str(start) if start else '' }
             {'AND create_time < ' + str(end) if end else ''}
         '''
@@ -308,7 +308,7 @@ class WeixinDbStorage:
         
         return total_msg
     
-    def get_chatroom_msg(self, username, start: str = '', end: str = ''):
+    def get_chatroom_msg_count(self, username, topN: int = 99999, start: str = '', end: str = ''):
         """获取群聊消息数量统计，按发送人分组统计
             start, end 为时间范围,格式为 '2023-01-01'或'2023-01-01 00:00:00'
             也可以用于聊天中统计两人的消息数量
@@ -317,14 +317,16 @@ class WeixinDbStorage:
         start, end = date_solve(start=start, end=end)
 
         sql = f'''
-            select sender_name, count(*)
+            select sender_name, count(message_content) as count
             from merged_msg
-            where username = ?
+            where username = ? and local_type in ({self.msgtype})
             {'AND create_time > ' + str(start) if start else '' }
             {'AND create_time < ' + str(end) if end else ''}
             group by sender_name
+            order by count desc
+            limit ?
         '''
-        result = self.msg_db.fetch_all(sql,(username,))
+        result = self.msg_db.fetch_all(sql,(username,topN))
         return result if result else []
     
     def get_messages_by_keyword(self, username_, keyword, num=5, max_len=10, start: str = '', end: str = '', year_='all'):
@@ -553,7 +555,7 @@ if __name__ == "__main__":
     # msg_list = wx.get_msg_list_by_username(username_list[0][1], start, end)
     # msg = [[item[1], item[-1].decode(errors='ignore')] for item in msg_list][-20:-10]
     # print(msg)
-    ss = wx.get_usernames_by_nicknames()
+    ss = wx.get_chatroom_msg_count('5886080448@chatroom',5, start, end)
     print(ss)
 
         

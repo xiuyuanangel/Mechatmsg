@@ -10,6 +10,7 @@ import jieba
 import pandas as pd
 from pyecharts import options as opts
 from pyecharts.charts import WordCloud, Calendar, Bar, Line, Pie, Map
+from pyecharts.commons.utils import JsCode
 
 # from app.person import Contact
 from region_conversion import conversion_province_to_chinese
@@ -235,6 +236,49 @@ def month_count(wxid, start='', end=''):
         # 'chart': m,
     }
 
+def chatroom_count(wxid,top=9999, start='', end=''):
+    '''聊天室统计发消息数量前top个，生成头像、昵称为坐标的横向柱状图'''
+    wx = gmt.WeixinDbStorage()
+    msg_data = wx.get_chatroom_msg_count(wxid,top, start, end)
+    df = wx.get_usernames_by_nicknames()
+    msg_data = [df[df['username'] == user[0]][['nickname','small_head_url']].values.tolist()[0] + [user[1]] for user in msg_data]
+    avatars = [item[1] for item in msg_data]
+    nicknames = [item[0] for item in msg_data]
+    counts = [item[2] for item in msg_data]
+
+    bar = (
+        Bar(init_opts=opts.InitOpts())
+        .add_xaxis(nicknames)
+        .add_yaxis("消息数量", counts, label_opts=opts.LabelOpts(is_show=True))
+        .set_global_opts(
+            title_opts=opts.TitleOpts(title="聊天室消息数量统计"),
+            xaxis_opts=opts.AxisOpts(axislabel_opts=opts.LabelOpts(rotate=-30)),
+            yaxis_opts=opts.AxisOpts(name="消息数"),
+            datazoom_opts=opts.DataZoomOpts(),
+            toolbox_opts=opts.ToolboxOpts(),
+        )
+        .set_series_opts(
+            itemstyle_opts=opts.ItemStyleOpts(
+                color=JsCode(
+                    """
+                    function(params) {
+                        var avatar = params.dataIndex < avatars.length ? avatars[params.dataIndex] : '';
+                        return {
+                            image: avatar,
+                            width: 20,
+                            height: 20,
+                            borderRadius: 10
+                        };
+                    }
+                    """
+                )
+            )
+        )
+    )
+
+    return {
+        'chart_room_data': bar.dump_options_with_quotes(),
+    }
 
 # def hour_count(wxid, is_Annual_report=False, year='2023'):
 #     """
