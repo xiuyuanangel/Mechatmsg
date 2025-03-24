@@ -1,0 +1,14 @@
+[project]
+name = "mechatmsg"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "flask>=3.1.0",
+    "jieba>=0.42.1",
+    "numpy>=2.2.4",
+    "pandas>=2.2.3",
+    "pyecharts>=2.0.8",
+    "zstandard>=0.23.0",
+]

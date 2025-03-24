@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mechatmsg | 联系人列表</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* 基础样式 */
+        body {
+            background-color: #f8f9fa;
+            height: 100vh;
+            overflow: hidden;
+            background: white;
+        }
+
+        .main-container {
+            height: 80vh; /* 保持视口高度的80% */
+            background: white;
+        }
+
+        /* 响应式布局调整 */
+        @media (min-width: 992px) {
+            .contacts-column {
+                border-right: 1px solid #dee2e6;
+            }
+        }
+
+        @media (max-width: 991.98px) {
+            .main-container {
+                height: 82vh; /* 补偿减少的margin */
+            }
+            .chat-column{
+                display: none;
+            }
+        }
+
+        /* 联系人列 */
+        .contacts-column {
+            height: calc(100% - 20px); /* 为顶部留白保留空间 */
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+
+        /* 聊天列 */
+        .chat-column {
+            height: calc(100% - 20px); /* 为顶部留白保留空间 */
+            display: flex;
+            flex-direction: column;
+            background: #f8fafb;
+        }
+
+        /* 固定头部 */
+        .list-header {
+            padding: 0 1rem 0 1rem;
+            background: white;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        /* 搜索框优化 */
+        .search-container {
+            position: relative;
+            margin-bottom: 1rem;
+            width: 100%; /* 添加宽度设置 */
+        }
+
+        .search-icon {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 2;
+        }
+
+        @media (max-width: 575.98px) {
+            .list-header h5 {
+                font-size: 1.1rem;
+            }
+        }
+
+        /* 可滚动区域 */
+        .scrollable-list {
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
+            padding: 0.5rem;
+            -webkit-overflow-scrolling: touch; /* 优化移动端滚动 */
+        }
+
+        /* 联系人项优化 */
+        .contact-item {
+            padding: 0.75rem;
+            transition: background-color 0.2s;
+            border-radius: 8px;
+            margin-bottom: 4px;
+        }
+
+        .contact-avatar {
+            width: 40px;
+            height: 40px;
+            min-width: 40px;
+            object-fit: cover;
+        }
+
+        /* 消息气泡 */
+        .message-bubble {
+            max-width: 85%;
+            padding: 0.75rem 1rem;
+            margin-bottom: 0.75rem;
+            border-radius: 1.15rem;
+            word-break: break-word;
+        }
+
+        /* 移动端优化 */
+        @media (max-width: 767.98px) {
+            .message-bubble {
+                max-width: 90%;
+                padding: 0.6rem 0.9rem;
+            }
+            .contact-item {
+                padding: 0.5rem;
+            }
+            .contact-avatar {
+                width: 36px;
+                height: 36px;
+                min-width: 36px;
+            }
+        }
+        .message-bubble {
+            position: relative;
+            max-width: 70%;
+            padding: 8px 12px;
+            margin: 8px 20px;
+            border-radius: 5px;
+            word-break: break-word;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* 他人消息样式 */
+        .other-message {
+            background: #ffffff;
+            border: 1px solid #e5e5e5;
+            margin-right: auto;
+            position: relative;
+        }
+
+        /* 自己消息样式 */
+        .self-message {
+            background: #9fea6e;
+            color: #000;
+            margin-left: auto;
+            border: 1px solid #83d04c;
+        }
+
+        /* 消息箭头 */
+        .other-message::before,
+        .self-message::after {
+            content: '';
+            position: absolute;
+            top: 11px;
+            width: 0;
+            height: 0;
+            border-style: solid;
+        }
+
+        /* 他人消息左箭头 */
+        .other-message::before {
+            left: -6px;
+            border-width: 6px 6px 6px 0;
+            border-color: transparent #ffffff transparent transparent;
+        }
+
+        .other-message::after {
+            left: -7px;
+            border-width: 6px 6px 6px 0;
+            border-color: transparent #e5e5e5 transparent transparent;
+        }
+
+        /* 自己消息右箭头 */
+        .self-message::before {
+            right: -6px;
+            border-width: 6px 0 6px 6px;
+            border-color: transparent transparent transparent #9fea6e;
+        }
+
+        .self-message::after {
+            right: -7px;
+            border-width: 6px 0 6px 6px;
+            border-color: transparent transparent transparent #83d04c;
+        }
+
+        /* 消息容器布局 */
+        .messages-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        /* 移动端优化 */
+        @media (max-width: 767.98px) {
+            .message-bubble {
+                max-width: 85%;
+                margin: 8px 12px;
+                padding: 6px 10px;
+            }
+            
+            .self-message::before,
+            .self-message::after {
+                right: -5px;
+                border-width: 5px 0 5px 5px;
+            }
+            
+            .other-message::before,
+            .other-message::after {
+                left: -5px;
+                border-width: 5px 5px 5px 0;
+            }
+        }
+        /* 新增：加载动画 */
+        .loading-indicator {
+            text-align: center;
+            padding: 1rem;
+            color: #666;
+            display: none;
+        }
+        .loader {
+            width: 24px;
+            height: 24px;
+            border: 3px solid #ddd;
+            border-radius: 50%;
+            border-top-color: #4CAF50;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .active {
+            background-color: #1277eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid main-container">
+        <div class="row justify-content-center">
+            <!-- 导航栏 -->
+            <nav class="navbar navbar-expand-lg navbar-light bg-light col-lg-7 col-md-10">
+                <div class="container-fluid">
+                    <a class="navbar-brand" href="#">Mechatmsg</a>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="navbarNav">
+                        <ul class="navbar-nav">
+                            <li class="nav-item">
+                                <a class="nav-link" href="/decrypt">解密数据</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link active" href="/">好友列表</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="/msganalysis/2024" target="_blank">我的年度报告</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        </div>
+        
+        <div class="row g-0 h-100 justify-content-center">  
+            <!-- 联系人列 -->
+            <div class="col-md-4 col-lg-2 contacts-column">
+                <div class="list-header">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <h5 class="mb-0">联系人</h5>
+                    </div>
+                    <div class="search-container">
+                        <input 
+                            type="text" 
+                            id="searchInput" 
+                            class="form-control" 
+                            placeholder="搜索..."
+                        >
+                        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="scrollable-list">
+                    {% for contact, username, headimgurl, remark in contacts %}
+                        {% if contact != '' and username[:3] != 'gh_' %}
+                        <div class="contact-item" username="{{ username }}" onclick="getmsg(this)">
+                            <div class="d-flex align-items-center">
+                                <img src="{{ headimgurl if 'headimg/default' not in headimgurl else '#' }}" 
+                                    class="rounded-circle me-3 contact-avatar"
+                                    alt="{{ contact }}">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-0 text-truncate">{{ remark if remark else contact }}</h6>
+                                    <!-- <small class="text-muted text-truncate d-block">@{{ username }}</small> -->
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- 聊天列 -->
+            <div class="col-md-6 col-lg-5 chat-column">
+                <div class="list-header d-none d-lg-block mt-0">
+                    <h5 class="mb-0 d-inline-block" id="contactName">聊天记录</h5>
+                </div>
+                <div class="scrollable-list" id="messagesContainer">
+                    <div class="messages-list"></div>
+                    <div class="loading-indicator" id="loading">
+                        <div class="loader"></div>
+                        <small>加载中...</small>
+                    </div>
+                </div>
+                <div style="text-align: right; margin-right: 5px;">
+                    <button class="btn btn-sm btn-outline-secondary d=inline-block" onclick="analysis()">记录分析</button>
+                    <button class="btn btn-sm btn-outline-secondary d=inline-block" onclick="y_analysis()">聊天年度报告</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const myname = "{{ myname }}";
+        // 新增分页相关变量
+        let currentPage = 1;
+        let perPage = 100;
+        let totalMessages = 0;
+        let isLoading = false;
+
+        // 响应式搜索功能
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            document.querySelectorAll('.contact-item').forEach(item => {
+                const text = item.textContent.toLowerCase();
+                item.style.display = text.includes(searchTerm) ? 'flex' : 'none';
+            });
+        });
+
+        // 移动端返回按钮
+        function showBackButton() {
+            if (window.innerWidth < 992) {
+                const backBtn = document.createElement('button');
+                backBtn.className = 'btn btn-link position-absolute start-0';
+                backBtn.innerHTML = '<i class="bi bi-arrow-left"></i>';
+                backBtn.onclick = () => {
+                    document.querySelector('.contacts-column').style.display = 'flex';
+                    document.querySelector('.chat-column').style.display = 'none';
+                };
+                document.querySelector('.chat-column .list-header').prepend(backBtn);
+            }
+        }
+
+        // 清除活动状态
+        function clearActive() {
+            document.querySelectorAll('.contact-item').forEach(item => {
+                item.classList.remove('active');
+            });
+        }
+
+        // 获取并显示消息
+        async function getmsg(element) {
+            clearActive();
+            const username = element.getAttribute('username');
+            const displayname = element.querySelector('h6').textContent;
+            document.querySelector('#contactName').textContent = displayname;
+            element.classList.add('active');
+            // 重置分页状态
+            currentPage = 1;
+            totalMessages = 0;
+            document.querySelector('.messages-list').innerHTML = '';
+            
+            // 首次加载
+            await loadMoreMessages(username);
+        }
+
+        // 新增：加载更多消息函数
+        async function loadMoreMessages(username) {
+            if (isLoading) return;
+            isLoading = true;
+            document.getElementById('loading').style.display = 'block';
+
+            try {
+                const response = await fetch('/get_message', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ 
+                        username,
+                        page: currentPage,
+                        per_page: perPage
+                    })
+                });
+                
+                const data = await response.json();
+                if (!data.data) return;
+
+                // 更新总数
+                if (totalMessages === 0) {
+                    totalMessages = data.total;
+                    document.querySelector('#contactName').textContent += ` (${data.total})`;
+                }
+
+                // 渲染消息
+                renderMessages(data.data);
+                
+                // 更新分页状态
+                console.log(data.data.length)
+                if (data.data.length > 0) {
+                    currentPage++;
+                    
+                }
+            } finally {
+                isLoading = false;
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+        function y_analysis(){
+            console.log('y_analysis')
+            const currentUser = document.querySelector('.contact-item.active'); // 获取当前选中的联系人
+            if (!currentUser) return; // 如果没有选中联系人，则不执行
+            const username = currentUser.getAttribute('username'); // 获取当前联系人的用户名
+            const displayname = currentUser.querySelector('h6').textContent; // 获取当前联系人的显示名
+            const ymsg_ana = document.createElement('a');
+            ymsg_ana.textContent = '';
+            ymsg_ana.href = `/christmas/${username}?`;
+            ymsg_ana.target = '_blank';
+            ymsg_ana.style.display='none'
+            document.body.appendChild(ymsg_ana);
+            ymsg_ana.click(); 
+        }
+        function analysis(){
+            const currentUser = document.querySelector('.contact-item.active'); // 获取当前选中的联系人
+            if (!currentUser) return; // 如果没有选中联系人，则不执行
+            const username = currentUser.getAttribute('username'); // 获取当前联系人的用户名
+            const displayname = currentUser.querySelector('h6').textContent; // 获取当前联系人的显示名
+            const msg_ana = document.createElement('a');
+            msg_ana.textContent = '';
+            msg_ana.href = `/charts/${username}?`;
+            msg_ana.target = '_blank';
+            msg_ana.style.display='none'
+            document.body.appendChild(msg_ana);
+            msg_ana.click(); 
+        }
+
+        // 新增：单独的消息渲染函数
+        function renderMessages(messages) {
+            const messagesList = document.querySelector('.messages-list');
+            messages.forEach(msgData => {
+                let [tuername, content, name, timest] = msgData;
+                const messageDiv = document.createElement('div');
+
+                messageDiv.classList.add('message-bubble', 
+                    (tuername === myname || tuername.slice(0, -3) === myname.slice(0, -3)) 
+                    ? 'self-message' 
+                    : 'other-message'
+                );
+
+                // 添加时间显示（模仿微信时间戳）
+                // console.log(timest)
+                const timestamp = new Date(timest*1000).toLocaleTimeString('zh-CN', { 
+                    hour: '2-digit', 
+                    minute: '2-digit'
+                });
+                // messagesList.innerHTML += `<small class="text-muted text-truncate d-block mb-0 text-center">${timestamp}</small>`;
+                if (content.includes("[卡片消息]")){
+                    let content0 = content.slice(0, content.indexOf("http"));
+                    let url = content.slice(content.indexOf("http"));
+                    content = `<a href="${url}">${content0}</a>`;
+                    
+                }
+
+                messageDiv.innerHTML = `   
+                    <div class="d-flex align-items-center ${tuername === myname ? 'justify-content-end' : ''}">
+                        ${tuername === myname ? `    
+                        <div class="flex-column">
+                                <div class="fw-bold small mb-1 text-end">我</div>
+                                <div class="message-content">${content}</div>
+                            </div>
+                        ` : `
+                            <div class="flex-column">
+                                <div class="fw-bold small mb-1">${name || tuername}</div>
+                                <div class="message-content">${content}</div>
+                            </div>
+                        `}
+                    </div>
+                `;
+                messagesList.appendChild(messageDiv);
+            });
+        }
+
+        // 新增：滚动监听
+        document.querySelector('#messagesContainer').addEventListener('scroll', function() {
+            const container = this;
+            const threshold = 120; // 提前100px加载
+            
+            if (container.scrollHeight - container.scrollTop - container.clientHeight < threshold) {
+                if(totalMessages/perPage <= currentPage){
+                    return;
+                }
+                const currentUser = document.querySelector('.contact-item.active');
+                // console.log(currentUser);
+                if (currentUser) {
+                    loadMoreMessages(currentUser.getAttribute('username'));
+                }
+            }
+        });
+
+        // 修改：卡片消息处理逻辑
+        function processContent(content) {
+            if (content.includes("[卡片消息]")) {
+                const urlIndex = content.indexOf("http");
+                if (urlIndex !== -1) {
+                    const content0 = content.slice(0, urlIndex);
+                    const url = content.slice(urlIndex);
+                    return `<a href="${url}" target="_blank">${content0}</a>`;
+                }
+            }
+            return content;
+        }
+    </script>
+</body>
+</html>
