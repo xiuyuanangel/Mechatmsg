@@ -481,7 +481,7 @@
                     
                 }
 
-                messageDiv.innerHTML = `   
+                messageDiv.innerHTML = `
                     <div class="d-flex align-items-center ${tuername === myname ? 'justify-content-end' : ''}">
                         ${tuername === myname ? `    
                         <div class="flex-column">
@@ -496,6 +496,11 @@
                         `}
                     </div>
                 `;
+                if (name == '系统') {
+                    messageDiv.innerHTML = `<small class="text-muted text-truncate d-block mb-0 text-center">${content}</small>`;
+                    messageDiv.className = 'system-message text-center';
+                    messageDiv.style.width = '100%';
+                }
                 messagesList.appendChild(messageDiv);
             });
         }

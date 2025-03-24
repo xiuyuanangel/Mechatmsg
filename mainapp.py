@@ -177,12 +177,19 @@ def get_message():
                           for item in msg_list]
 
         # 获取联系人信息
-        df = wx.get_contact_by_usernames(list(set([item[0] for item in msg_content_list])))
+        df = wx.get_contact_by_usernames(list(set([username for username, msg, t in msg_content_list])))
         df['显示名'] = np.where(df['remark']!='', df['remark'], df['nickname'])
-        
+        # print(df)
         # 整理消息数据
-        datas = [[username, msg, df[df['username'] == username]['显示名'].values[0], t] 
+        datas = [[username, msg, df[df['username'] == username]['显示名'].values[0] if username else '系统', t] 
                 for username, msg, t in msg_content_list]
+        # datas = []
+        # for username, msg, t in msg_content_list:
+        #     try:
+        #         datas.append([username, msg, df[df['username'] == username]['显示名'].values[0] if username else '系统', t])
+        #     except:
+        #         print('信息',username, msg, t)
+        #         print(df[df['username'] == username]['显示名'].values)
         
         return jsonify({
             "data": datas,
